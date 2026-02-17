@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Budget Mage</string>
+
+    <!-- Common -->
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Excluir</string>
+    <string name="edit">Editar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="close">Fechar</string>
+    <string name="loading">Carregando...</string>
+    <string name="error">Erro</string>
+    <string name="success">Sucesso</string>
+    <string name="required_field">Campo obrigatório</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_transactions">Transações</string>
+    <string name="nav_categories">Categorias</string>
+    <string name="nav_accounts">Contas</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Resumo Mensal</string>
+    <string name="dashboard_income">Receitas</string>
+    <string name="dashboard_expense">Despesas</string>
+    <string name="dashboard_balance">Saldo</string>
+    <string name="dashboard_top_expenses">Maiores Gastos</string>
+    <string name="dashboard_no_transactions">Nenhuma transação neste mês</string>
+    <string name="dashboard_add_first">Adicione sua primeira transação!</string>
+
+    <!-- Transactions -->
+    <string name="transactions_title">Transações</string>
+    <string name="add_transaction">Nova Transação</string>
+    <string name="edit_transaction">Editar Transação</string>
+    <string name="transaction_amount">Valor</string>
+    <string name="transaction_amount_hint">0,00</string>
+    <string name="transaction_date">Data</string>
+    <string name="transaction_type">Tipo</string>
+    <string name="transaction_category">Categoria</string>
+    <string name="transaction_account">Conta</string>
+    <string name="transaction_description">Descrição</string>
+    <string name="transaction_description_hint">Descrição opcional</string>
+    <string name="transaction_income">Receita</string>
+    <string name="transaction_expense">Despesa</string>
+    <string name="transaction_saved">Transação salva</string>
+    <string name="transaction_deleted">Transação excluída</string>
+    <string name="transaction_delete_confirm">Deseja excluir esta transação?</string>
+    <string name="no_transactions">Nenhuma transação encontrada</string>
+    <string name="invalid_amount">Valor inválido</string>
+    <string name="select_category">Selecione uma categoria</string>
+    <string name="select_account">Selecione uma conta</string>
+
+    <!-- Filters -->
+    <string name="filter">Filtrar</string>
+    <string name="filter_title">Filtros</string>
+    <string name="filter_clear">Limpar filtros</string>
+    <string name="filter_apply">Aplicar</string>
+    <string name="filter_date_range">Período</string>
+    <string name="filter_start_date">Data inicial</string>
+    <string name="filter_end_date">Data final</string>
+    <string name="filter_type">Tipo</string>
+    <string name="filter_all">Todos</string>
+
+    <!-- Categories -->
+    <string name="categories_title">Categorias</string>
+    <string name="add_category">Nova Categoria</string>
+    <string name="edit_category">Editar Categoria</string>
+    <string name="category_name">Nome</string>
+    <string name="category_name_hint">Nome da categoria</string>
+    <string name="category_type">Tipo</string>
+    <string name="category_income">Receita</string>
+    <string name="category_expense">Despesa</string>
+    <string name="category_saved">Categoria salva</string>
+    <string name="category_deleted">Categoria excluída</string>
+    <string name="category_delete_confirm">Deseja excluir esta categoria?</string>
+    <string name="category_in_use">Esta categoria está sendo usada em %d transações. Não é possível excluí-la.</string>
+    <string name="no_categories">Nenhuma categoria encontrada</string>
+    <string name="category_duplicate">Já existe uma categoria com este nome</string>
+
+    <!-- Accounts -->
+    <string name="accounts_title">Contas Bancárias</string>
+    <string name="add_account">Nova Conta</string>
+    <string name="edit_account">Editar Conta</string>
+    <string name="account_code">Código</string>
+    <string name="account_code_hint">Ex: BB, NU, ITAU</string>
+    <string name="account_name">Nome</string>
+    <string name="account_name_hint">Nome da conta</string>
+    <string name="account_saved">Conta salva</string>
+    <string name="account_deleted">Conta excluída</string>
+    <string name="account_delete_confirm">Deseja excluir esta conta?</string>
+    <string name="account_in_use">Esta conta está sendo usada em %d transações. Não é possível excluí-la.</string>
+    <string name="no_accounts">Nenhuma conta encontrada</string>
+    <string name="account_duplicate">Já existe uma conta com este código</string>
+
+    <!-- Date Picker -->
+    <string name="select_date">Selecionar data</string>
+    <string name="today">Hoje</string>
+</resources>
