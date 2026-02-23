@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
+import com.budgetmage.BuildConfig
 import com.budgetmage.R
 import com.budgetmage.ui.components.ConfirmDeleteDialog
 import com.budgetmage.ui.components.FilterBottomSheet
@@ -51,7 +56,7 @@ fun TransactionListScreen(
     viewModel: TransactionListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val transactions by viewModel.transactions.collectAsStateWithLifecycle()
+    val transactions = viewModel.transactions.collectAsLazyPagingItems()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
 
@@ -68,6 +73,10 @@ fun TransactionListScreen(
                 is TransactionListEvent.TransactionDeleted -> {
                     snackbarHostState.showSnackbar("Transação excluída")
                 }
+                is TransactionListEvent.TestDataSeeded -> {
+                    snackbarHostState.showSnackbar("100 transações de teste criadas!")
+                    transactions.refresh()
+                }
             }
         }
     }
@@ -82,6 +91,15 @@ fun TransactionListScreen(
                     }
                 },
                 actions = {
+                    // Debug button to seed test data (only in debug builds)
+                    if (BuildConfig.DEBUG) {
+                        IconButton(onClick = { viewModel.seedTestData() }) {
+                            Icon(
+                                Icons.Default.BugReport,
+                                contentDescription = "Gerar dados de teste"
+                            )
+                        }
+                    }
                     IconButton(onClick = { viewModel.showFilterSheet() }) {
                         Icon(
                             Icons.Default.FilterList,
@@ -104,7 +122,7 @@ fun TransactionListScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         when {
-            uiState.isLoading -> {
+            transactions.loadState.refresh is LoadState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -114,7 +132,7 @@ fun TransactionListScreen(
                     CircularProgressIndicator()
                 }
             }
-            transactions.isEmpty() -> {
+            transactions.itemCount == 0 && transactions.loadState.refresh is LoadState.NotLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -149,14 +167,29 @@ fun TransactionListScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(
-                        items = transactions,
-                        key = { it.id }
-                    ) { transaction ->
-                        TransactionItem(
-                            transaction = transaction,
-                            onClick = { onTransactionClick(transaction.id) },
-                            onLongClick = { viewModel.showDeleteConfirmation(transaction) }
-                        )
+                        count = transactions.itemCount,
+                        key = transactions.itemKey { it.id }
+                    ) { index ->
+                        transactions[index]?.let { transaction ->
+                            TransactionItem(
+                                transaction = transaction,
+                                onClick = { onTransactionClick(transaction.id) },
+                                onLongClick = { viewModel.showDeleteConfirmation(transaction) }
+                            )
+                        }
+                    }
+
+                    if (transactions.loadState.append is LoadState.Loading) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                     }
                 }
             }

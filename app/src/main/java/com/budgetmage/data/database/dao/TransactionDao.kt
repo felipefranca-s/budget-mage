@@ -1,5 +1,6 @@
 package com.budgetmage.data.database.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -39,6 +40,27 @@ interface TransactionDao {
         startDate: Long? = null,
         endDate: Long? = null
     ): Flow<List<TransactionWithDetails>>
+
+    @Query("""
+        SELECT t.id, t.accountId, a.name as accountName, t.categoryId, c.name as categoryName,
+               t.type, t.amountCents, t.date, t.description, t.createdAt, t.updatedAt
+        FROM transactions t
+        INNER JOIN categories c ON t.categoryId = c.id
+        INNER JOIN accounts a ON t.accountId = a.id
+        WHERE (:type IS NULL OR t.type = :type)
+          AND (:categoryId IS NULL OR t.categoryId = :categoryId)
+          AND (:accountId IS NULL OR t.accountId = :accountId)
+          AND (:startDate IS NULL OR t.date >= :startDate)
+          AND (:endDate IS NULL OR t.date <= :endDate)
+        ORDER BY t.date DESC, t.createdAt DESC
+    """)
+    fun getFilteredTransactionsPaged(
+        type: TransactionType? = null,
+        categoryId: Long? = null,
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): PagingSource<Int, TransactionWithDetails>
 
     @Query("""
         SELECT t.id, t.accountId, a.name as accountName, t.categoryId, c.name as categoryName,

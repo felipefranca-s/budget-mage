@@ -1,5 +1,8 @@
 package com.budgetmage.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.budgetmage.data.database.dao.TransactionDao
 import com.budgetmage.data.database.entity.CategoryTotal
 import com.budgetmage.data.database.entity.MonthSummary
@@ -32,6 +35,29 @@ class TransactionRepository @Inject constructor(
         startDate = startDate,
         endDate = endDate
     )
+
+    fun getFilteredTransactionsPaged(
+        type: TransactionType? = null,
+        categoryId: Long? = null,
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): Flow<PagingData<TransactionWithDetails>> = Pager(
+        config = PagingConfig(
+            pageSize = 20,
+            enablePlaceholders = false,
+            prefetchDistance = 5
+        ),
+        pagingSourceFactory = {
+            transactionDao.getFilteredTransactionsPaged(
+                type = type,
+                categoryId = categoryId,
+                accountId = accountId,
+                startDate = startDate,
+                endDate = endDate
+            )
+        }
+    ).flow
 
     fun getTransactionById(id: Long): Flow<TransactionWithDetails?> =
         transactionDao.getTransactionById(id)

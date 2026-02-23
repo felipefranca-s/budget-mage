@@ -2,6 +2,9 @@ package com.budgetmage.ui.transaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.budgetmage.data.database.TestDataSeeder
 import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryEntity
 import com.budgetmage.data.database.entity.TransactionType
@@ -11,6 +14,7 @@ import com.budgetmage.data.repository.CategoryRepository
 import com.budgetmage.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -47,11 +51,13 @@ data class TransactionListUiState(
 sealed class TransactionListEvent {
     data class Error(val message: String) : TransactionListEvent()
     object TransactionDeleted : TransactionListEvent()
+    object TestDataSeeded : TransactionListEvent()
 }
 
 @HiltViewModel
 class TransactionListViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
+    private val testDataSeeder: TestDataSeeder,
     categoryRepository: CategoryRepository,
     accountRepository: AccountRepository
 ) : ViewModel() {
@@ -65,9 +71,9 @@ class TransactionListViewModel @Inject constructor(
     private val _filter = MutableStateFlow(TransactionFilter())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val transactions: StateFlow<List<TransactionWithDetails>> = _filter
+    val transactions: Flow<PagingData<TransactionWithDetails>> = _filter
         .flatMapLatest { filter ->
-            transactionRepository.getFilteredTransactions(
+            transactionRepository.getFilteredTransactionsPaged(
                 type = filter.type,
                 categoryId = filter.categoryId,
                 accountId = filter.accountId,
@@ -75,21 +81,13 @@ class TransactionListViewModel @Inject constructor(
                 endDate = filter.endDate?.toEpochDay()
             )
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .cachedIn(viewModelScope)
 
     val categories: StateFlow<List<CategoryEntity>> = categoryRepository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val accounts: StateFlow<List<AccountEntity>> = accountRepository.getAllAccounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    init {
-        viewModelScope.launch {
-            transactions.collect {
-                _uiState.update { state -> state.copy(isLoading = false) }
-            }
-        }
-    }
 
     fun showFilterSheet() {
         _uiState.update { it.copy(showFilterSheet = true) }
@@ -142,6 +140,17 @@ class TransactionListViewModel @Inject constructor(
                     _events.emit(TransactionListEvent.Error(e.message ?: "Erro ao excluir"))
                 }
             )
+        }
+    }
+
+    fun seedTestData() {
+        viewModelScope.launch {
+            try {
+                testDataSeeder.seedTestTransactions(100)
+                _events.emit(TransactionListEvent.TestDataSeeded)
+            } catch (e: Exception) {
+                _events.emit(TransactionListEvent.Error(e.message ?: "Erro ao criar dados de teste"))
+            }
         }
     }
 }
