@@ -56,6 +56,7 @@ import com.budgetmage.util.DateFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -299,7 +300,7 @@ fun AddEditTransactionScreen(
                         onClick = {
                             datePickerState.selectedDateMillis?.let { millis ->
                                 val date = Instant.ofEpochMilli(millis)
-                                    .atZone(ZoneId.systemDefault())
+                                    .atZone(ZoneOffset.UTC)
                                     .toLocalDate()
                                 viewModel.onDateChange(date)
                             }
