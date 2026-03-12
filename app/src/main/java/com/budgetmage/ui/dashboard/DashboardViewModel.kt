@@ -19,7 +19,8 @@ import javax.inject.Inject
 
 data class DashboardUiState(
     val selectedMonth: YearMonth = YearMonth.now(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val valuesHidden: Boolean = true
 )
 
 @HiltViewModel
@@ -72,6 +73,12 @@ class DashboardViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(
             selectedMonth = _uiState.value.selectedMonth.plusMonths(1),
             isLoading = true
+        )
+    }
+
+    fun toggleValuesVisibility() {
+        _uiState.value = _uiState.value.copy(
+            valuesHidden = !_uiState.value.valuesHidden
         )
     }
 }

@@ -18,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -75,6 +77,22 @@ fun DashboardScreen(
                     IconButton(onClick = onMenuClick) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleValuesVisibility() }) {
+                        Icon(
+                            imageVector = if (uiState.valuesHidden) {
+                                Icons.Default.VisibilityOff
+                            } else {
+                                Icons.Default.Visibility
+                            },
+                            contentDescription = if (uiState.valuesHidden) {
+                                stringResource(R.string.show_values)
+                            } else {
+                                stringResource(R.string.hide_values)
+                            }
+                        )
+                    }
                 }
             )
         },
@@ -113,6 +131,8 @@ fun DashboardScreen(
 
                 // Summary cards
                 item {
+                    val hiddenValue = "R$ ••••••"
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -120,14 +140,14 @@ fun DashboardScreen(
                         // Income card
                         SummaryCard(
                             title = stringResource(R.string.dashboard_income),
-                            amount = CurrencyFormatter.formatCents(monthSummary.totalIncomeCents),
+                            amount = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(monthSummary.totalIncomeCents),
                             color = incomeColor,
                             modifier = Modifier.weight(1f)
                         )
                         // Expense card
                         SummaryCard(
                             title = stringResource(R.string.dashboard_expense),
-                            amount = CurrencyFormatter.formatCents(monthSummary.totalExpenseCents),
+                            amount = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(monthSummary.totalExpenseCents),
                             color = expenseColor,
                             modifier = Modifier.weight(1f)
                         )
@@ -136,6 +156,8 @@ fun DashboardScreen(
 
                 // Balance card
                 item {
+                    val hiddenValue = "R$ ••••••"
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -154,10 +176,11 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = CurrencyFormatter.formatCents(monthSummary.balanceCents),
+                                text = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(monthSummary.balanceCents),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (monthSummary.balanceCents >= 0) incomeColor else expenseColor
+                                color = if (uiState.valuesHidden) MaterialTheme.colorScheme.onPrimaryContainer
+                                       else if (monthSummary.balanceCents >= 0) incomeColor else expenseColor
                             )
                         }
                     }
