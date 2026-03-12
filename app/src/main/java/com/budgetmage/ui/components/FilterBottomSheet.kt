@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
@@ -78,159 +81,168 @@ fun FilterBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
         ) {
             Text(
                 text = stringResource(R.string.filter),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Type filter
-            Text(
-                text = stringResource(R.string.transaction_type),
-                style = MaterialTheme.typography.labelLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Scrollable content area
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                FilterChip(
-                    selected = selectedType == null,
-                    onClick = {
-                        selectedType = null
-                        selectedCategoryId = null
-                    },
-                    label = { Text(stringResource(R.string.filter_all)) }
+                // 1. Type filter
+                Text(
+                    text = stringResource(R.string.transaction_type),
+                    style = MaterialTheme.typography.labelLarge
                 )
-                FilterChip(
-                    selected = selectedType == TransactionType.EXPENSE,
-                    onClick = {
-                        selectedType = TransactionType.EXPENSE
-                        // Reset category if it doesn't match type
-                        if (selectedCategoryId != null) {
-                            val category = categories.find { it.id == selectedCategoryId }
-                            if (category?.type != TransactionType.EXPENSE) {
-                                selectedCategoryId = null
-                            }
-                        }
-                    },
-                    label = { Text(stringResource(R.string.transaction_expense)) }
-                )
-                FilterChip(
-                    selected = selectedType == TransactionType.INCOME,
-                    onClick = {
-                        selectedType = TransactionType.INCOME
-                        // Reset category if it doesn't match type
-                        if (selectedCategoryId != null) {
-                            val category = categories.find { it.id == selectedCategoryId }
-                            if (category?.type != TransactionType.INCOME) {
-                                selectedCategoryId = null
-                            }
-                        }
-                    },
-                    label = { Text(stringResource(R.string.transaction_income)) }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Category filter
-            Text(
-                text = stringResource(R.string.transaction_category),
-                style = MaterialTheme.typography.labelLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = selectedCategoryId == null,
-                    onClick = { selectedCategoryId = null },
-                    label = { Text(stringResource(R.string.filter_all)) }
-                )
-                filteredCategories.forEach { category ->
-                    CategoryChip(
-                        category = category,
-                        selected = selectedCategoryId == category.id,
-                        onClick = { selectedCategoryId = category.id }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Account filter
-            Text(
-                text = stringResource(R.string.transaction_account),
-                style = MaterialTheme.typography.labelLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = selectedAccountId == null,
-                    onClick = { selectedAccountId = null },
-                    label = { Text(stringResource(R.string.filter_all)) }
-                )
-                accounts.forEach { account ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FilterChip(
-                        selected = selectedAccountId == account.id,
-                        onClick = { selectedAccountId = account.id },
-                        label = { Text(account.name) }
+                        selected = selectedType == null,
+                        onClick = {
+                            selectedType = null
+                            selectedCategoryId = null
+                        },
+                        label = { Text(stringResource(R.string.filter_all)) }
+                    )
+                    FilterChip(
+                        selected = selectedType == TransactionType.EXPENSE,
+                        onClick = {
+                            selectedType = TransactionType.EXPENSE
+                            // Reset category if it doesn't match type
+                            if (selectedCategoryId != null) {
+                                val category = categories.find { it.id == selectedCategoryId }
+                                if (category?.type != TransactionType.EXPENSE) {
+                                    selectedCategoryId = null
+                                }
+                            }
+                        },
+                        label = { Text(stringResource(R.string.transaction_expense)) }
+                    )
+                    FilterChip(
+                        selected = selectedType == TransactionType.INCOME,
+                        onClick = {
+                            selectedType = TransactionType.INCOME
+                            // Reset category if it doesn't match type
+                            if (selectedCategoryId != null) {
+                                val category = categories.find { it.id == selectedCategoryId }
+                                if (category?.type != TransactionType.INCOME) {
+                                    selectedCategoryId = null
+                                }
+                            }
+                        },
+                        label = { Text(stringResource(R.string.transaction_income)) }
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Date range filter
-            Text(
-                text = stringResource(R.string.filter_date_range),
-                style = MaterialTheme.typography.labelLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = startDate?.let { DateFormatter.formatMedium(it) } ?: "",
-                    onValueChange = {},
-                    label = { Text(stringResource(R.string.filter_start_date)) },
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showStartDatePicker = true }) {
-                            Icon(Icons.Default.DateRange, contentDescription = null)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
+                // 2. Account filter
+                Text(
+                    text = stringResource(R.string.transaction_account),
+                    style = MaterialTheme.typography.labelLarge
                 )
-                OutlinedTextField(
-                    value = endDate?.let { DateFormatter.formatMedium(it) } ?: "",
-                    onValueChange = {},
-                    label = { Text(stringResource(R.string.filter_end_date)) },
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showEndDatePicker = true }) {
-                            Icon(Icons.Default.DateRange, contentDescription = null)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedAccountId == null,
+                        onClick = { selectedAccountId = null },
+                        label = { Text(stringResource(R.string.filter_all)) }
+                    )
+                    accounts.forEach { account ->
+                        FilterChip(
+                            selected = selectedAccountId == account.id,
+                            onClick = { selectedAccountId = account.id },
+                            label = { Text(account.name) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. Date range filter
+                Text(
+                    text = stringResource(R.string.filter_date_range),
+                    style = MaterialTheme.typography.labelLarge
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = startDate?.let { DateFormatter.formatMedium(it) } ?: "",
+                        onValueChange = {},
+                        label = { Text(stringResource(R.string.filter_start_date)) },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { showStartDatePicker = true }) {
+                                Icon(Icons.Default.DateRange, contentDescription = null)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = endDate?.let { DateFormatter.formatMedium(it) } ?: "",
+                        onValueChange = {},
+                        label = { Text(stringResource(R.string.filter_end_date)) },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { showEndDatePicker = true }) {
+                                Icon(Icons.Default.DateRange, contentDescription = null)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 4. Category filter
+                Text(
+                    text = stringResource(R.string.transaction_category),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedCategoryId == null,
+                        onClick = { selectedCategoryId = null },
+                        label = { Text(stringResource(R.string.filter_all)) }
+                    )
+                    filteredCategories.forEach { category ->
+                        CategoryChip(
+                            category = category,
+                            selected = selectedCategoryId == category.id,
+                            onClick = { selectedCategoryId = category.id }
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons
+            // Action buttons (fixed at bottom)
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
@@ -263,8 +275,6 @@ fun FilterBottomSheet(
                     Text(stringResource(R.string.filter_apply))
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 
