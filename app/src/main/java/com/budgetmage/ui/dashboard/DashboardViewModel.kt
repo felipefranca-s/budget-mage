@@ -42,9 +42,9 @@ class DashboardViewModel @Inject constructor(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val topExpenses: StateFlow<List<CategoryTotal>> = _uiState
+    val categoryExpenses: StateFlow<List<CategoryTotal>> = _uiState
         .flatMapLatest { state ->
-            transactionRepository.getTopExpenseCategories(state.selectedMonth, 5)
+            transactionRepository.getAllExpenseCategories(state.selectedMonth)
         }
         .stateIn(
             viewModelScope,

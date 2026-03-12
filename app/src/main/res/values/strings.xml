@@ -26,6 +26,7 @@
     <string name="dashboard_expense">Despesas</string>
     <string name="dashboard_balance">Saldo</string>
     <string name="dashboard_top_expenses">Maiores Gastos</string>
+    <string name="dashboard_expenses_by_category">Gastos por Categoria</string>
     <string name="dashboard_no_transactions">Nenhuma transação neste mês</string>
     <string name="dashboard_add_first">Adicione sua primeira transação!</string>
 

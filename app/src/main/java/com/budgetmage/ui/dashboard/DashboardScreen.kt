@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -58,7 +61,7 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
-    val topExpenses by viewModel.topExpenses.collectAsStateWithLifecycle()
+    val categoryExpenses by viewModel.categoryExpenses.collectAsStateWithLifecycle()
 
     val isDark = isSystemInDarkTheme()
     val incomeColor = if (isDark) IncomeColorDark else IncomeColor
@@ -160,17 +163,17 @@ fun DashboardScreen(
                     }
                 }
 
-                // Top expenses section
+                // Expenses by category section
                 item {
                     Text(
-                        text = stringResource(R.string.dashboard_top_expenses),
+                        text = stringResource(R.string.dashboard_expenses_by_category),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
-                if (topExpenses.isEmpty()) {
-                    item {
+                item {
+                    if (categoryExpenses.isEmpty()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -195,17 +198,26 @@ fun DashboardScreen(
                                 )
                             }
                         }
-                    }
-                } else {
-                    // Calculate max for progress bar
-                    val maxExpense = topExpenses.maxOfOrNull { it.totalCents } ?: 1L
+                    } else {
+                        // Calculate max for progress bar
+                        val maxExpense = categoryExpenses.maxOfOrNull { it.totalCents } ?: 1L
 
-                    items(topExpenses, key = { it.categoryId }) { categoryTotal ->
-                        CategoryExpenseItem(
-                            categoryTotal = categoryTotal,
-                            maxExpense = maxExpense,
-                            onClick = { onCategoryClick(categoryTotal.categoryId) }
-                        )
+                        // Scrollable category list with max height
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 350.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            categoryExpenses.forEach { categoryTotal ->
+                                CategoryExpenseItem(
+                                    categoryTotal = categoryTotal,
+                                    maxExpense = maxExpense,
+                                    onClick = { onCategoryClick(categoryTotal.categoryId) }
+                                )
+                            }
+                        }
                     }
                 }
             }

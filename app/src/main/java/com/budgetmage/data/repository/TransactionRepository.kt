@@ -114,4 +114,10 @@ class TransactionRepository @Inject constructor(
         val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
         return transactionDao.getTopExpenseCategories(startDay, endDay, limit)
     }
+
+    fun getAllExpenseCategories(yearMonth: YearMonth): Flow<List<CategoryTotal>> {
+        val startDay = yearMonth.atDay(1).toEpochDay()
+        val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
+        return transactionDao.getAllExpenseCategories(startDay, endDay)
+    }
 }

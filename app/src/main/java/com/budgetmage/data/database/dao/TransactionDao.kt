@@ -110,4 +110,16 @@ interface TransactionDao {
         LIMIT :limit
     """)
     fun getTopExpenseCategories(startDay: Long, endDay: Long, limit: Int = 5): Flow<List<CategoryTotal>>
+
+    @Query("""
+        SELECT c.id as categoryId, c.name as categoryName, SUM(t.amountCents) as totalCents
+        FROM transactions t
+        INNER JOIN categories c ON t.categoryId = c.id
+        WHERE t.type = 'EXPENSE'
+          AND t.date >= :startDay
+          AND t.date < :endDay
+        GROUP BY t.categoryId
+        ORDER BY totalCents DESC
+    """)
+    fun getAllExpenseCategories(startDay: Long, endDay: Long): Flow<List<CategoryTotal>>
 }
