@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,7 +39,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.budgetmage.BuildConfig
 import com.budgetmage.R
 import com.budgetmage.ui.components.ConfirmDeleteDialog
 import com.budgetmage.ui.components.FilterBottomSheet
@@ -73,10 +71,6 @@ fun TransactionListScreen(
                 is TransactionListEvent.TransactionDeleted -> {
                     snackbarHostState.showSnackbar("Transação excluída")
                 }
-                is TransactionListEvent.TestDataSeeded -> {
-                    snackbarHostState.showSnackbar("100 transações de teste criadas!")
-                    transactions.refresh()
-                }
             }
         }
     }
@@ -91,15 +85,6 @@ fun TransactionListScreen(
                     }
                 },
                 actions = {
-                    // Debug button to seed test data (only in debug builds)
-                    if (BuildConfig.DEBUG) {
-                        IconButton(onClick = { viewModel.seedTestData() }) {
-                            Icon(
-                                Icons.Default.BugReport,
-                                contentDescription = "Gerar dados de teste"
-                            )
-                        }
-                    }
                     IconButton(onClick = { viewModel.showFilterSheet() }) {
                         Icon(
                             Icons.Default.FilterList,

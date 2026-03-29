@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.budgetmage.data.database.TestDataSeeder
 import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryEntity
 import com.budgetmage.data.database.entity.TransactionType
@@ -52,13 +51,11 @@ data class TransactionListUiState(
 sealed class TransactionListEvent {
     data class Error(val message: String) : TransactionListEvent()
     object TransactionDeleted : TransactionListEvent()
-    object TestDataSeeded : TransactionListEvent()
 }
 
 @HiltViewModel
 class TransactionListViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
-    private val testDataSeeder: TestDataSeeder,
     categoryRepository: CategoryRepository,
     accountRepository: AccountRepository,
     savedStateHandle: SavedStateHandle
@@ -154,17 +151,6 @@ class TransactionListViewModel @Inject constructor(
                     _events.emit(TransactionListEvent.Error(e.message ?: "Erro ao excluir"))
                 }
             )
-        }
-    }
-
-    fun seedTestData() {
-        viewModelScope.launch {
-            try {
-                testDataSeeder.seedTestTransactions(100)
-                _events.emit(TransactionListEvent.TestDataSeeded)
-            } catch (e: Exception) {
-                _events.emit(TransactionListEvent.Error(e.message ?: "Erro ao criar dados de teste"))
-            }
         }
     }
 }
