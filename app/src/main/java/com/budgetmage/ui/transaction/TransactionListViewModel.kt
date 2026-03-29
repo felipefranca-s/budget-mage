@@ -12,6 +12,7 @@ import com.budgetmage.data.database.entity.TransactionWithDetails
 import com.budgetmage.data.repository.AccountRepository
 import com.budgetmage.data.repository.CategoryRepository
 import com.budgetmage.data.repository.TransactionRepository
+import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -59,16 +60,29 @@ class TransactionListViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val testDataSeeder: TestDataSeeder,
     categoryRepository: CategoryRepository,
-    accountRepository: AccountRepository
+    accountRepository: AccountRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TransactionListUiState())
+    private val initialFilter: TransactionFilter = run {
+        val categoryId = savedStateHandle.get<Long>("categoryId")?.takeIf { it != -1L }
+        val startDate = savedStateHandle.get<Long>("startDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
+        val endDate = savedStateHandle.get<Long>("endDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
+        TransactionFilter(
+            type = if (categoryId != null) TransactionType.EXPENSE else null,
+            categoryId = categoryId,
+            startDate = startDate,
+            endDate = endDate
+        )
+    }
+
+    private val _uiState = MutableStateFlow(TransactionListUiState(filter = initialFilter))
     val uiState: StateFlow<TransactionListUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<TransactionListEvent>()
     val events: SharedFlow<TransactionListEvent> = _events.asSharedFlow()
 
-    private val _filter = MutableStateFlow(TransactionFilter())
+    private val _filter = MutableStateFlow(initialFilter)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val transactions: Flow<PagingData<TransactionWithDetails>> = _filter

@@ -19,6 +19,7 @@ import com.budgetmage.ui.components.AppDrawer
 import com.budgetmage.ui.dashboard.DashboardScreen
 import com.budgetmage.ui.transaction.AddEditTransactionScreen
 import com.budgetmage.ui.transaction.TransactionListScreen
+import java.time.YearMonth
 import kotlinx.coroutines.launch
 
 /**
@@ -26,13 +27,27 @@ import kotlinx.coroutines.launch
  */
 object Routes {
     const val DASHBOARD = "dashboard"
-    const val TRANSACTION_LIST = "transactions"
+    const val TRANSACTION_LIST = "transactions?categoryId={categoryId}&startDate={startDate}&endDate={endDate}"
+    const val TRANSACTION_LIST_BASE = "transactions"
     const val ADD_TRANSACTION = "transaction/add"
     const val EDIT_TRANSACTION = "transaction/edit/{transactionId}"
     const val CATEGORIES = "categories"
     const val ACCOUNTS = "accounts"
 
     fun editTransaction(transactionId: Long) = "transaction/edit/$transactionId"
+
+    fun transactionListWithFilter(
+        categoryId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): String {
+        val params = mutableListOf<String>()
+        categoryId?.let { params.add("categoryId=$it") }
+        startDate?.let { params.add("startDate=$it") }
+        endDate?.let { params.add("endDate=$it") }
+        return if (params.isEmpty()) TRANSACTION_LIST_BASE
+        else "$TRANSACTION_LIST_BASE?${params.joinToString("&")}"
+    }
 }
 
 /**
@@ -49,7 +64,7 @@ fun BudgetMageNavGraph(
     val currentRoute = navBackStackEntry?.destination?.route ?: Routes.DASHBOARD
 
     // Only show drawer on main screens (Dashboard, Transaction List)
-    val showDrawer = currentRoute in listOf(Routes.DASHBOARD, Routes.TRANSACTION_LIST)
+    val showDrawer = currentRoute == Routes.DASHBOARD || currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -80,7 +95,23 @@ fun BudgetMageNavGraph(
             startDestination = startDestination
         ) {
             // Transaction List
-            composable(Routes.TRANSACTION_LIST) {
+            composable(
+                route = Routes.TRANSACTION_LIST,
+                arguments = listOf(
+                    navArgument("categoryId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("startDate") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("endDate") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    }
+                )
+            ) {
                 TransactionListScreen(
                     onAddClick = { navController.navigate(Routes.ADD_TRANSACTION) },
                     onTransactionClick = { id -> navController.navigate(Routes.editTransaction(id)) },
@@ -111,9 +142,17 @@ fun BudgetMageNavGraph(
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
                     onAddTransaction = { navController.navigate(Routes.ADD_TRANSACTION) },
-                    onNavigateToTransactions = { navController.navigate(Routes.TRANSACTION_LIST) },
-                    onCategoryClick = { categoryId ->
-                        navController.navigate(Routes.TRANSACTION_LIST)
+                    onNavigateToTransactions = { navController.navigate(Routes.TRANSACTION_LIST_BASE) },
+                    onCategoryClick = { categoryId, selectedMonth ->
+                        val startDate = selectedMonth.atDay(1).toEpochDay()
+                        val endDate = selectedMonth.atEndOfMonth().toEpochDay()
+                        navController.navigate(
+                            Routes.transactionListWithFilter(
+                                categoryId = categoryId,
+                                startDate = startDate,
+                                endDate = endDate
+                            )
+                        )
                     },
                     onMenuClick = { scope.launch { drawerState.open() } }
                 )

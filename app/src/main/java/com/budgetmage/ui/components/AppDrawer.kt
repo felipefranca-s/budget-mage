@@ -60,11 +60,11 @@ fun AppDrawer(
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Receipt, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_transactions)) },
-            selected = currentRoute == Routes.TRANSACTION_LIST,
+            selected = currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE),
             onClick = {
                 scope.launch { drawerState.close() }
-                if (currentRoute != Routes.TRANSACTION_LIST) {
-                    onNavigate(Routes.TRANSACTION_LIST)
+                if (!currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE)) {
+                    onNavigate(Routes.TRANSACTION_LIST_BASE)
                 }
             },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

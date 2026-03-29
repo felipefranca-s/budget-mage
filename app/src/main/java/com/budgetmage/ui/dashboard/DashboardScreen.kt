@@ -57,7 +57,7 @@ import com.budgetmage.ui.theme.IncomeColorDark
 fun DashboardScreen(
     onAddTransaction: () -> Unit,
     onNavigateToTransactions: () -> Unit,
-    onCategoryClick: (Long) -> Unit,
+    onCategoryClick: (Long, java.time.YearMonth) -> Unit,
     onMenuClick: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -237,7 +237,7 @@ fun DashboardScreen(
                                 CategoryExpenseItem(
                                     categoryTotal = categoryTotal,
                                     maxExpense = maxExpense,
-                                    onClick = { onCategoryClick(categoryTotal.categoryId) }
+                                    onClick = { onCategoryClick(categoryTotal.categoryId, uiState.selectedMonth) }
                                 )
                             }
                         }
