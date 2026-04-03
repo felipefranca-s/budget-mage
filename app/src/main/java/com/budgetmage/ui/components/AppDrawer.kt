@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.budgetmage.R
 import com.budgetmage.ui.navigation.Routes
+import java.time.YearMonth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -63,9 +64,15 @@ fun AppDrawer(
             selected = currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE),
             onClick = {
                 scope.launch { drawerState.close() }
-                if (!currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE)) {
-                    onNavigate(Routes.TRANSACTION_LIST_BASE)
-                }
+                val now = YearMonth.now()
+                val startDate = now.atDay(1).toEpochDay()
+                val endDate = now.atEndOfMonth().toEpochDay()
+                onNavigate(
+                    Routes.transactionListWithFilter(
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                )
             },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
