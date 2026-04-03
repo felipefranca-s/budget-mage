@@ -46,6 +46,7 @@ import com.budgetmage.util.DateFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -294,7 +295,7 @@ fun FilterBottomSheet(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
                             startDate = Instant.ofEpochMilli(millis)
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneOffset.UTC)
                                 .toLocalDate()
                         }
                         showStartDatePicker = false
@@ -329,7 +330,7 @@ fun FilterBottomSheet(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
                             endDate = Instant.ofEpochMilli(millis)
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneOffset.UTC)
                                 .toLocalDate()
                         }
                         showEndDatePicker = false
