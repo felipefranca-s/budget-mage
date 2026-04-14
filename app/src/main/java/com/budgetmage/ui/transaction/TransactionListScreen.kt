@@ -1,9 +1,11 @@
 package com.budgetmage.ui.transaction
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,16 +13,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Functions
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -31,7 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,9 +47,15 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.budgetmage.R
+import com.budgetmage.data.database.entity.MonthSummary
 import com.budgetmage.ui.components.ConfirmDeleteDialog
 import com.budgetmage.ui.components.FilterBottomSheet
 import com.budgetmage.ui.components.TransactionItem
+import com.budgetmage.ui.theme.ExpenseColor
+import com.budgetmage.ui.theme.ExpenseColorDark
+import com.budgetmage.ui.theme.IncomeColor
+import com.budgetmage.ui.theme.IncomeColorDark
+import com.budgetmage.util.CurrencyFormatter
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,6 +98,17 @@ fun TransactionListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.toggleSummary() }) {
+                        Icon(
+                            Icons.Default.Functions,
+                            contentDescription = "Somatória",
+                            tint = if (uiState.summary != null) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
+                    }
                     IconButton(onClick = { viewModel.showFilterSheet() }) {
                         Icon(
                             Icons.Default.FilterList,
@@ -144,35 +168,40 @@ fun TransactionListScreen(
                 }
             }
             else -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(paddingValues)
                 ) {
-                    items(
-                        count = transactions.itemCount,
-                        key = transactions.itemKey { it.id }
-                    ) { index ->
-                        transactions[index]?.let { transaction ->
-                            TransactionItem(
-                                transaction = transaction,
-                                onClick = { onTransactionClick(transaction.id) },
-                                onLongClick = { viewModel.showDeleteConfirmation(transaction) }
-                            )
+                    uiState.summary?.let { SummaryHeader(summary = it) }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            count = transactions.itemCount,
+                            key = transactions.itemKey { it.id }
+                        ) { index ->
+                            transactions[index]?.let { transaction ->
+                                TransactionItem(
+                                    transaction = transaction,
+                                    onClick = { onTransactionClick(transaction.id) },
+                                    onLongClick = { viewModel.showDeleteConfirmation(transaction) }
+                                )
+                            }
                         }
-                    }
 
-                    if (transactions.loadState.append is LoadState.Loading) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
+                        if (transactions.loadState.append is LoadState.Loading) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
                             }
                         }
                     }
@@ -209,6 +238,87 @@ fun TransactionListScreen(
             onDismiss = {
                 viewModel.hideFilterSheet()
             }
+        )
+    }
+}
+
+@Composable
+private fun SummaryHeader(summary: MonthSummary) {
+    val hasIncome = summary.totalIncomeCents > 0L
+    val hasExpense = summary.totalExpenseCents > 0L
+    if (!hasIncome && !hasExpense) return
+
+    val isDark = isSystemInDarkTheme()
+    val incomeColor = if (isDark) IncomeColorDark else IncomeColor
+    val expenseColor = if (isDark) ExpenseColorDark else ExpenseColor
+    val showBalance = hasIncome && hasExpense
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (hasIncome) {
+                    SummaryItem(
+                        label = stringResource(R.string.dashboard_income),
+                        amount = CurrencyFormatter.formatCents(summary.totalIncomeCents),
+                        color = incomeColor,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (hasExpense) {
+                    SummaryItem(
+                        label = stringResource(R.string.dashboard_expense),
+                        amount = CurrencyFormatter.formatCents(summary.totalExpenseCents),
+                        color = expenseColor,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            if (showBalance) {
+                Divider()
+                SummaryItem(
+                    label = stringResource(R.string.dashboard_balance),
+                    amount = CurrencyFormatter.formatCents(summary.balanceCents),
+                    color = if (summary.balanceCents >= 0) incomeColor else expenseColor,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryItem(
+    label: String,
+    amount: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = amount,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }

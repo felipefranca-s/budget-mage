@@ -37,6 +37,36 @@ class TransactionRepository @Inject constructor(
         endDate = endDate
     )
 
+    fun getFilteredSummary(
+        type: TransactionType? = null,
+        categoryIds: List<Long> = emptyList(),
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): Flow<MonthSummary> = transactionDao.getFilteredSummary(
+        type = type,
+        hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
+        categoryIds = categoryIds.ifEmpty { listOf(-1L) },
+        accountId = accountId,
+        startDate = startDate,
+        endDate = endDate
+    )
+
+    suspend fun getFilteredSummaryOnce(
+        type: TransactionType? = null,
+        categoryIds: List<Long> = emptyList(),
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): MonthSummary = transactionDao.getFilteredSummaryOnce(
+        type = type,
+        hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
+        categoryIds = categoryIds.ifEmpty { listOf(-1L) },
+        accountId = accountId,
+        startDate = startDate,
+        endDate = endDate
+    )
+
     fun getFilteredTransactionsPaged(
         type: TransactionType? = null,
         categoryIds: List<Long> = emptyList(),

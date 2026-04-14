@@ -43,6 +43,46 @@ interface TransactionDao {
     ): Flow<List<TransactionWithDetails>>
 
     @Query("""
+        SELECT
+            COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountCents ELSE 0 END), 0) as totalIncomeCents,
+            COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountCents ELSE 0 END), 0) as totalExpenseCents
+        FROM transactions t
+        WHERE (:type IS NULL OR t.type = :type)
+          AND (:hasCategoryFilter = 0 OR t.categoryId IN (:categoryIds))
+          AND (:accountId IS NULL OR t.accountId = :accountId)
+          AND (:startDate IS NULL OR t.date >= :startDate)
+          AND (:endDate IS NULL OR t.date <= :endDate)
+    """)
+    fun getFilteredSummary(
+        type: TransactionType? = null,
+        hasCategoryFilter: Int = 0,
+        categoryIds: List<Long> = listOf(-1L),
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): Flow<MonthSummary>
+
+    @Query("""
+        SELECT
+            COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amountCents ELSE 0 END), 0) as totalIncomeCents,
+            COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amountCents ELSE 0 END), 0) as totalExpenseCents
+        FROM transactions t
+        WHERE (:type IS NULL OR t.type = :type)
+          AND (:hasCategoryFilter = 0 OR t.categoryId IN (:categoryIds))
+          AND (:accountId IS NULL OR t.accountId = :accountId)
+          AND (:startDate IS NULL OR t.date >= :startDate)
+          AND (:endDate IS NULL OR t.date <= :endDate)
+    """)
+    suspend fun getFilteredSummaryOnce(
+        type: TransactionType? = null,
+        hasCategoryFilter: Int = 0,
+        categoryIds: List<Long> = listOf(-1L),
+        accountId: Long? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): MonthSummary
+
+    @Query("""
         SELECT t.id, t.accountId, a.name as accountName, t.categoryId, c.name as categoryName,
                t.type, t.amountCents, t.date, t.description, t.createdAt, t.updatedAt
         FROM transactions t

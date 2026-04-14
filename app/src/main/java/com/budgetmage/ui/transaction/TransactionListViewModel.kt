@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryEntity
+import com.budgetmage.data.database.entity.MonthSummary
 import com.budgetmage.data.database.entity.TransactionType
 import com.budgetmage.data.database.entity.TransactionWithDetails
 import com.budgetmage.data.repository.AccountRepository
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -45,7 +47,8 @@ data class TransactionListUiState(
     val isLoading: Boolean = true,
     val filter: TransactionFilter = TransactionFilter(),
     val showFilterSheet: Boolean = false,
-    val transactionToDelete: TransactionWithDetails? = null
+    val transactionToDelete: TransactionWithDetails? = null,
+    val summary: MonthSummary? = null
 )
 
 sealed class TransactionListEvent {
@@ -113,7 +116,8 @@ class TransactionListViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 filter = filter,
-                showFilterSheet = false
+                showFilterSheet = false,
+                summary = null
             )
         }
     }
@@ -124,8 +128,27 @@ class TransactionListViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 filter = emptyFilter,
-                showFilterSheet = false
+                showFilterSheet = false,
+                summary = null
             )
+        }
+    }
+
+    fun toggleSummary() {
+        if (_uiState.value.summary != null) {
+            _uiState.update { it.copy(summary = null) }
+            return
+        }
+        val filter = _filter.value
+        viewModelScope.launch {
+            val result = transactionRepository.getFilteredSummaryOnce(
+                type = filter.type,
+                categoryIds = filter.categoryIds.toList(),
+                accountId = filter.accountId,
+                startDate = filter.startDate?.toEpochDay(),
+                endDate = filter.endDate?.toEpochDay()
+            )
+            _uiState.update { it.copy(summary = result) }
         }
     }
 
