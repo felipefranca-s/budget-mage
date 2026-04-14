@@ -60,7 +60,7 @@ fun FilterBottomSheet(
     onDismiss: () -> Unit
 ) {
     var selectedType by remember(currentFilter) { mutableStateOf(currentFilter.type) }
-    var selectedCategoryId by remember(currentFilter) { mutableStateOf(currentFilter.categoryId) }
+    var selectedCategoryIds by remember(currentFilter) { mutableStateOf(currentFilter.categoryIds) }
     var selectedAccountId by remember(currentFilter) { mutableStateOf(currentFilter.accountId) }
     var startDate by remember(currentFilter) { mutableStateOf(currentFilter.startDate) }
     var endDate by remember(currentFilter) { mutableStateOf(currentFilter.endDate) }
@@ -108,23 +108,16 @@ fun FilterBottomSheet(
                 ) {
                     FilterChip(
                         selected = selectedType == null,
-                        onClick = {
-                            selectedType = null
-                            selectedCategoryId = null
-                        },
+                        onClick = { selectedType = null },
                         label = { Text(stringResource(R.string.filter_all)) }
                     )
                     FilterChip(
                         selected = selectedType == TransactionType.EXPENSE,
                         onClick = {
                             selectedType = TransactionType.EXPENSE
-                            // Reset category if it doesn't match type
-                            if (selectedCategoryId != null) {
-                                val category = categories.find { it.id == selectedCategoryId }
-                                if (category?.type != TransactionType.EXPENSE) {
-                                    selectedCategoryId = null
-                                }
-                            }
+                            selectedCategoryIds = selectedCategoryIds.filter { id ->
+                                categories.find { it.id == id }?.type == TransactionType.EXPENSE
+                            }.toSet()
                         },
                         label = { Text(stringResource(R.string.transaction_expense)) }
                     )
@@ -132,13 +125,9 @@ fun FilterBottomSheet(
                         selected = selectedType == TransactionType.INCOME,
                         onClick = {
                             selectedType = TransactionType.INCOME
-                            // Reset category if it doesn't match type
-                            if (selectedCategoryId != null) {
-                                val category = categories.find { it.id == selectedCategoryId }
-                                if (category?.type != TransactionType.INCOME) {
-                                    selectedCategoryId = null
-                                }
-                            }
+                            selectedCategoryIds = selectedCategoryIds.filter { id ->
+                                categories.find { it.id == id }?.type == TransactionType.INCOME
+                            }.toSet()
                         },
                         label = { Text(stringResource(R.string.transaction_income)) }
                     )
@@ -223,15 +212,21 @@ fun FilterBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
-                        selected = selectedCategoryId == null,
-                        onClick = { selectedCategoryId = null },
+                        selected = selectedCategoryIds.isEmpty(),
+                        onClick = { selectedCategoryIds = emptySet() },
                         label = { Text(stringResource(R.string.filter_all)) }
                     )
                     filteredCategories.forEach { category ->
                         CategoryChip(
                             category = category,
-                            selected = selectedCategoryId == category.id,
-                            onClick = { selectedCategoryId = category.id }
+                            selected = category.id in selectedCategoryIds,
+                            onClick = {
+                                selectedCategoryIds = if (category.id in selectedCategoryIds) {
+                                    selectedCategoryIds - category.id
+                                } else {
+                                    selectedCategoryIds + category.id
+                                }
+                            }
                         )
                     }
                 }
@@ -249,7 +244,7 @@ fun FilterBottomSheet(
                 OutlinedButton(
                     onClick = {
                         selectedType = null
-                        selectedCategoryId = null
+                        selectedCategoryIds = emptySet()
                         selectedAccountId = null
                         startDate = null
                         endDate = null
@@ -264,7 +259,7 @@ fun FilterBottomSheet(
                         onApplyFilter(
                             TransactionFilter(
                                 type = selectedType,
-                                categoryId = selectedCategoryId,
+                                categoryIds = selectedCategoryIds,
                                 accountId = selectedAccountId,
                                 startDate = startDate,
                                 endDate = endDate

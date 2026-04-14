@@ -24,13 +24,14 @@ class TransactionRepository @Inject constructor(
 
     fun getFilteredTransactions(
         type: TransactionType? = null,
-        categoryId: Long? = null,
+        categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
         endDate: Long? = null
     ): Flow<List<TransactionWithDetails>> = transactionDao.getFilteredTransactions(
         type = type,
-        categoryId = categoryId,
+        hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
+        categoryIds = categoryIds.ifEmpty { listOf(-1L) },
         accountId = accountId,
         startDate = startDate,
         endDate = endDate
@@ -38,7 +39,7 @@ class TransactionRepository @Inject constructor(
 
     fun getFilteredTransactionsPaged(
         type: TransactionType? = null,
-        categoryId: Long? = null,
+        categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
         endDate: Long? = null
@@ -51,7 +52,8 @@ class TransactionRepository @Inject constructor(
         pagingSourceFactory = {
             transactionDao.getFilteredTransactionsPaged(
                 type = type,
-                categoryId = categoryId,
+                hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
+                categoryIds = categoryIds.ifEmpty { listOf(-1L) },
                 accountId = accountId,
                 startDate = startDate,
                 endDate = endDate

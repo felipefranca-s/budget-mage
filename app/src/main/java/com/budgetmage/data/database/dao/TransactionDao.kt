@@ -27,7 +27,7 @@ interface TransactionDao {
         INNER JOIN categories c ON t.categoryId = c.id
         INNER JOIN accounts a ON t.accountId = a.id
         WHERE (:type IS NULL OR t.type = :type)
-          AND (:categoryId IS NULL OR t.categoryId = :categoryId)
+          AND (:hasCategoryFilter = 0 OR t.categoryId IN (:categoryIds))
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
@@ -35,7 +35,8 @@ interface TransactionDao {
     """)
     fun getFilteredTransactions(
         type: TransactionType? = null,
-        categoryId: Long? = null,
+        hasCategoryFilter: Int = 0,
+        categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
         endDate: Long? = null
@@ -48,7 +49,7 @@ interface TransactionDao {
         INNER JOIN categories c ON t.categoryId = c.id
         INNER JOIN accounts a ON t.accountId = a.id
         WHERE (:type IS NULL OR t.type = :type)
-          AND (:categoryId IS NULL OR t.categoryId = :categoryId)
+          AND (:hasCategoryFilter = 0 OR t.categoryId IN (:categoryIds))
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
@@ -56,7 +57,8 @@ interface TransactionDao {
     """)
     fun getFilteredTransactionsPaged(
         type: TransactionType? = null,
-        categoryId: Long? = null,
+        hasCategoryFilter: Int = 0,
+        categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
         endDate: Long? = null

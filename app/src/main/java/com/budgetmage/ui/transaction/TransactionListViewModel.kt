@@ -31,13 +31,13 @@ import javax.inject.Inject
 
 data class TransactionFilter(
     val type: TransactionType? = null,
-    val categoryId: Long? = null,
+    val categoryIds: Set<Long> = emptySet(),
     val accountId: Long? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null
 ) {
     val hasActiveFilters: Boolean
-        get() = type != null || categoryId != null || accountId != null ||
+        get() = type != null || categoryIds.isNotEmpty() || accountId != null ||
                 startDate != null || endDate != null
 }
 
@@ -67,7 +67,7 @@ class TransactionListViewModel @Inject constructor(
         val endDate = savedStateHandle.get<Long>("endDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
         TransactionFilter(
             type = if (categoryId != null) TransactionType.EXPENSE else null,
-            categoryId = categoryId,
+            categoryIds = if (categoryId != null) setOf(categoryId) else emptySet(),
             startDate = startDate,
             endDate = endDate
         )
@@ -86,7 +86,7 @@ class TransactionListViewModel @Inject constructor(
         .flatMapLatest { filter ->
             transactionRepository.getFilteredTransactionsPaged(
                 type = filter.type,
-                categoryId = filter.categoryId,
+                categoryIds = filter.categoryIds.toList(),
                 accountId = filter.accountId,
                 startDate = filter.startDate?.toEpochDay(),
                 endDate = filter.endDate?.toEpochDay()
