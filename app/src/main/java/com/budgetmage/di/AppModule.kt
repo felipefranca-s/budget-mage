@@ -4,6 +4,7 @@ import android.content.Context
 import com.budgetmage.data.database.AppDatabase
 import com.budgetmage.data.database.dao.AccountDao
 import com.budgetmage.data.database.dao.CategoryDao
+import com.budgetmage.data.database.dao.PaymentDao
 import com.budgetmage.data.database.dao.TransactionDao
 import dagger.Module
 import dagger.Provides
@@ -38,5 +39,11 @@ object AppModule {
     @Singleton
     fun provideTransactionDao(database: AppDatabase): TransactionDao {
         return database.transactionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePaymentDao(database: AppDatabase): PaymentDao {
+        return database.paymentDao()
     }
 }

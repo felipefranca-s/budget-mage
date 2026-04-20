@@ -17,6 +17,8 @@ import com.budgetmage.ui.account.AccountListScreen
 import com.budgetmage.ui.category.CategoryListScreen
 import com.budgetmage.ui.components.AppDrawer
 import com.budgetmage.ui.dashboard.DashboardScreen
+import com.budgetmage.ui.payment.AddEditPaymentScreen
+import com.budgetmage.ui.payment.PaymentListScreen
 import com.budgetmage.ui.transaction.AddEditTransactionScreen
 import com.budgetmage.ui.transaction.TransactionListScreen
 import java.time.YearMonth
@@ -29,12 +31,36 @@ object Routes {
     const val DASHBOARD = "dashboard"
     const val TRANSACTION_LIST = "transactions?categoryId={categoryId}&startDate={startDate}&endDate={endDate}"
     const val TRANSACTION_LIST_BASE = "transactions"
-    const val ADD_TRANSACTION = "transaction/add"
+    const val ADD_TRANSACTION = "transaction/add?amountCents={amountCents}&categoryId={categoryId}&accountId={accountId}&description={description}&paymentId={paymentId}&yearMonth={yearMonth}"
+    const val ADD_TRANSACTION_BASE = "transaction/add"
     const val EDIT_TRANSACTION = "transaction/edit/{transactionId}"
     const val CATEGORIES = "categories"
     const val ACCOUNTS = "accounts"
+    const val PAYMENTS = "payments"
+    const val ADD_PAYMENT = "payment/add"
+    const val EDIT_PAYMENT = "payment/edit/{paymentId}"
 
     fun editTransaction(transactionId: Long) = "transaction/edit/$transactionId"
+
+    fun editPayment(paymentId: Long) = "payment/edit/$paymentId"
+
+    fun addTransactionFromPayment(
+        paymentId: Long,
+        yearMonth: Int,
+        amountCents: Long,
+        categoryId: Long,
+        accountId: Long,
+        description: String
+    ): String {
+        val params = mutableListOf<String>()
+        params.add("amountCents=$amountCents")
+        params.add("categoryId=$categoryId")
+        params.add("accountId=$accountId")
+        params.add("description=$description")
+        params.add("paymentId=$paymentId")
+        params.add("yearMonth=$yearMonth")
+        return "$ADD_TRANSACTION_BASE?${params.joinToString("&")}"
+    }
 
     fun transactionListWithFilter(
         categoryId: Long? = null,
@@ -63,8 +89,10 @@ fun BudgetMageNavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Routes.DASHBOARD
 
-    // Only show drawer on main screens (Dashboard, Transaction List)
-    val showDrawer = currentRoute == Routes.DASHBOARD || currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE)
+    // Only show drawer on main screens (Dashboard, Transaction List, Payments)
+    val showDrawer = currentRoute == Routes.DASHBOARD ||
+        currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE) ||
+        currentRoute == Routes.PAYMENTS
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -114,8 +142,37 @@ fun BudgetMageNavGraph(
                 )
             }
 
-            // Add Transaction
-            composable(Routes.ADD_TRANSACTION) {
+            // Add Transaction (with optional prefill args from payment flow)
+            composable(
+                route = Routes.ADD_TRANSACTION,
+                arguments = listOf(
+                    navArgument("amountCents") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("categoryId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("accountId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("description") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("paymentId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("yearMonth") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                )
+            ) {
                 AddEditTransactionScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -163,6 +220,44 @@ fun BudgetMageNavGraph(
             // Accounts
             composable(Routes.ACCOUNTS) {
                 AccountListScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Payments (Contas Fixas)
+            composable(Routes.PAYMENTS) {
+                PaymentListScreen(
+                    onAddPayment = { navController.navigate(Routes.ADD_PAYMENT) },
+                    onEditPayment = { id -> navController.navigate(Routes.editPayment(id)) },
+                    onMarkAsPaid = { paymentId, yearMonth, amountCents, categoryId, accountId, description ->
+                        navController.navigate(
+                            Routes.addTransactionFromPayment(
+                                paymentId = paymentId,
+                                yearMonth = yearMonth,
+                                amountCents = amountCents,
+                                categoryId = categoryId,
+                                accountId = accountId,
+                                description = description
+                            )
+                        )
+                    },
+                    onMenuClick = { scope.launch { drawerState.open() } }
+                )
+            }
+
+            composable(Routes.ADD_PAYMENT) {
+                AddEditPaymentScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Routes.EDIT_PAYMENT,
+                arguments = listOf(
+                    navArgument("paymentId") { type = NavType.LongType }
+                )
+            ) {
+                AddEditPaymentScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

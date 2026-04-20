@@ -9,6 +9,7 @@ import com.budgetmage.data.database.entity.TransactionEntity
 import com.budgetmage.data.database.entity.TransactionType
 import com.budgetmage.data.repository.AccountRepository
 import com.budgetmage.data.repository.CategoryRepository
+import com.budgetmage.data.repository.PaymentRepository
 import com.budgetmage.data.repository.TransactionRepository
 import com.budgetmage.util.CurrencyFormatter
 import com.budgetmage.util.DateFormatter
@@ -47,15 +48,33 @@ sealed class AddEditTransactionEvent {
     data class Error(val message: String) : AddEditTransactionEvent()
 }
 
+private data class PaymentContext(
+    val paymentId: Long,
+    val yearMonth: Int
+)
+
 @HiltViewModel
 class AddEditTransactionViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val paymentRepository: PaymentRepository
 ) : ViewModel() {
 
     private val transactionId: Long? = savedStateHandle.get<Long>("transactionId")
+
+    private val prefillAmountCents: Long = savedStateHandle.get<Long>("amountCents") ?: -1L
+    private val prefillCategoryId: Long = savedStateHandle.get<Long>("categoryId") ?: -1L
+    private val prefillAccountId: Long = savedStateHandle.get<Long>("accountId") ?: -1L
+    private val prefillDescription: String? = savedStateHandle.get<String>("description")
+    private val prefillPaymentId: Long = savedStateHandle.get<Long>("paymentId") ?: -1L
+    private val prefillYearMonth: Int = savedStateHandle.get<Int>("yearMonth") ?: -1
+
+    private val paymentContext: PaymentContext? =
+        if (prefillPaymentId > 0 && prefillYearMonth > 0) {
+            PaymentContext(prefillPaymentId, prefillYearMonth)
+        } else null
 
     private val _uiState = MutableStateFlow(AddEditTransactionUiState())
     val uiState: StateFlow<AddEditTransactionUiState> = _uiState.asStateFlow()
@@ -96,7 +115,20 @@ class AddEditTransactionViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                 }
             } else {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        amountInput = if (prefillAmountCents > 0) {
+                            CurrencyFormatter.formatCents(prefillAmountCents)
+                                .replace("R$", "")
+                                .trim()
+                        } else it.amountInput,
+                        selectedType = if (paymentContext != null) TransactionType.EXPENSE else it.selectedType,
+                        selectedCategoryId = if (prefillCategoryId > 0) prefillCategoryId else it.selectedCategoryId,
+                        selectedAccountId = if (prefillAccountId > 0) prefillAccountId else it.selectedAccountId,
+                        description = prefillDescription ?: it.description
+                    )
+                }
             }
         }
     }
@@ -187,21 +219,35 @@ class AddEditTransactionViewModel @Inject constructor(
                 updatedAt = System.currentTimeMillis()
             )
 
-            val result = if (state.isEditMode) {
-                transactionRepository.update(transaction)
+            if (state.isEditMode) {
+                transactionRepository.update(transaction).fold(
+                    onSuccess = {
+                        _events.emit(AddEditTransactionEvent.TransactionSaved)
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(isSaving = false) }
+                        _events.emit(AddEditTransactionEvent.Error(e.message ?: "Erro ao salvar"))
+                    }
+                )
             } else {
-                transactionRepository.insert(transaction).map { }
+                transactionRepository.insert(transaction).fold(
+                    onSuccess = { newId ->
+                        paymentContext?.let { ctx ->
+                            paymentRepository.markPaid(
+                                paymentId = ctx.paymentId,
+                                yearMonth = ctx.yearMonth,
+                                transactionId = newId,
+                                paidAt = DateFormatter.todayEpochDay()
+                            )
+                        }
+                        _events.emit(AddEditTransactionEvent.TransactionSaved)
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(isSaving = false) }
+                        _events.emit(AddEditTransactionEvent.Error(e.message ?: "Erro ao salvar"))
+                    }
+                )
             }
-
-            result.fold(
-                onSuccess = {
-                    _events.emit(AddEditTransactionEvent.TransactionSaved)
-                },
-                onFailure = { e ->
-                    _uiState.update { it.copy(isSaving = false) }
-                    _events.emit(AddEditTransactionEvent.Error(e.message ?: "Erro ao salvar"))
-                }
-            )
         }
     }
 }
