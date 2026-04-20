@@ -64,6 +64,7 @@ fun DashboardScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
     val categoryExpenses by viewModel.categoryExpenses.collectAsStateWithLifecycle()
+    val unpaidBillsTotal by viewModel.unpaidBillsTotal.collectAsStateWithLifecycle()
 
     val isDark = isSystemInDarkTheme()
     val incomeColor = if (isDark) IncomeColorDark else IncomeColor
@@ -154,34 +155,70 @@ fun DashboardScreen(
                     }
                 }
 
-                // Balance card
+                // Balance and recommended spending cards
                 item {
                     val hiddenValue = "R$ ••••••"
+                    val recommendedSpendingCents = (monthSummary.balanceCents - unpaidBillsTotal).coerceAtLeast(0L)
 
-                    Card(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // Balance card
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         ) {
-                            Text(
-                                text = stringResource(R.string.dashboard_balance),
-                                style = MaterialTheme.typography.titleMedium
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.dashboard_balance),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(monthSummary.balanceCents),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (uiState.valuesHidden) MaterialTheme.colorScheme.onPrimaryContainer
+                                           else if (monthSummary.balanceCents >= 0) incomeColor else expenseColor
+                                )
+                            }
+                        }
+
+                        // Recommended spending card
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(monthSummary.balanceCents),
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (uiState.valuesHidden) MaterialTheme.colorScheme.onPrimaryContainer
-                                       else if (monthSummary.balanceCents >= 0) incomeColor else expenseColor
-                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.dashboard_recommended_spending),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (uiState.valuesHidden) hiddenValue else CurrencyFormatter.formatCents(recommendedSpendingCents),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
                         }
                     }
                 }

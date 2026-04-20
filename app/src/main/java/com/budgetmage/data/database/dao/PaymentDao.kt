@@ -37,6 +37,21 @@ interface PaymentDao {
         lastDay: Long
     ): Flow<List<PaymentWithStatus>>
 
+    @Query("""
+        SELECT COALESCE(SUM(p.amountCents), 0)
+        FROM payments p
+        LEFT JOIN payment_month_status s
+            ON s.paymentId = p.id AND s.yearMonth = :yearMonth
+        WHERE p.startDate <= :lastDay
+          AND (p.endDate IS NULL OR p.endDate >= :firstDay)
+          AND s.paymentId IS NULL
+    """)
+    fun getUnpaidTotalForMonth(
+        yearMonth: Int,
+        firstDay: Long,
+        lastDay: Long
+    ): Flow<Long>
+
     @Query("SELECT * FROM payments WHERE id = :id")
     suspend fun getPaymentById(id: Long): PaymentEntity?
 

@@ -21,6 +21,13 @@ class PaymentRepository @Inject constructor(
         return paymentDao.getActivePaymentsForMonth(encoded, firstDay, lastDay)
     }
 
+    fun getUnpaidTotalForMonth(yearMonth: YearMonth): Flow<Long> {
+        val encoded = encodeYearMonth(yearMonth)
+        val firstDay = yearMonth.atDay(1).toEpochDay()
+        val lastDay = yearMonth.atEndOfMonth().toEpochDay()
+        return paymentDao.getUnpaidTotalForMonth(encoded, firstDay, lastDay)
+    }
+
     suspend fun getPaymentById(id: Long): PaymentEntity? = paymentDao.getPaymentById(id)
 
     suspend fun insertPayment(payment: PaymentEntity): Result<Long> = try {
