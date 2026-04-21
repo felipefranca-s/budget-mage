@@ -65,6 +65,7 @@ fun DashboardScreen(
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
     val categoryExpenses by viewModel.categoryExpenses.collectAsStateWithLifecycle()
     val unpaidBillsTotal by viewModel.unpaidBillsTotal.collectAsStateWithLifecycle()
+    val goalsTotal by viewModel.goalsTotal.collectAsStateWithLifecycle()
 
     val isDark = isSystemInDarkTheme()
     val incomeColor = if (isDark) IncomeColorDark else IncomeColor
@@ -158,7 +159,7 @@ fun DashboardScreen(
                 // Balance and recommended spending cards
                 item {
                     val hiddenValue = "R$ ••••••"
-                    val recommendedSpendingCents = (monthSummary.balanceCents - unpaidBillsTotal).coerceAtLeast(0L)
+                    val recommendedSpendingCents = (monthSummary.balanceCents - unpaidBillsTotal - goalsTotal).coerceAtLeast(0L)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

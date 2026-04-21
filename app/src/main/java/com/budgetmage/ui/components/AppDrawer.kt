@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.DrawerState
@@ -86,6 +87,19 @@ fun AppDrawer(
                 scope.launch { drawerState.close() }
                 if (currentRoute != Routes.PAYMENTS) {
                     onNavigate(Routes.PAYMENTS)
+                }
+            },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Flag, contentDescription = null) },
+            label = { Text("Metas") },
+            selected = currentRoute == Routes.GOALS,
+            onClick = {
+                scope.launch { drawerState.close() }
+                if (currentRoute != Routes.GOALS) {
+                    onNavigate(Routes.GOALS)
                 }
             },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

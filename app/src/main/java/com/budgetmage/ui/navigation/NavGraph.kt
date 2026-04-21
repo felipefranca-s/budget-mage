@@ -17,6 +17,8 @@ import com.budgetmage.ui.account.AccountListScreen
 import com.budgetmage.ui.category.CategoryListScreen
 import com.budgetmage.ui.components.AppDrawer
 import com.budgetmage.ui.dashboard.DashboardScreen
+import com.budgetmage.ui.goal.AddEditGoalScreen
+import com.budgetmage.ui.goal.GoalListScreen
 import com.budgetmage.ui.payment.AddEditPaymentScreen
 import com.budgetmage.ui.payment.PaymentListScreen
 import com.budgetmage.ui.transaction.AddEditTransactionScreen
@@ -39,10 +41,15 @@ object Routes {
     const val PAYMENTS = "payments"
     const val ADD_PAYMENT = "payment/add"
     const val EDIT_PAYMENT = "payment/edit/{paymentId}"
+    const val GOALS = "goals"
+    const val ADD_GOAL = "goal/add"
+    const val EDIT_GOAL = "goal/edit/{goalId}"
 
     fun editTransaction(transactionId: Long) = "transaction/edit/$transactionId"
 
     fun editPayment(paymentId: Long) = "payment/edit/$paymentId"
+
+    fun editGoal(goalId: Long) = "goal/edit/$goalId"
 
     fun addTransactionFromPayment(
         paymentId: Long,
@@ -89,10 +96,11 @@ fun BudgetMageNavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Routes.DASHBOARD
 
-    // Only show drawer on main screens (Dashboard, Transaction List, Payments)
+    // Only show drawer on main screens (Dashboard, Transaction List, Payments, Goals)
     val showDrawer = currentRoute == Routes.DASHBOARD ||
         currentRoute.startsWith(Routes.TRANSACTION_LIST_BASE) ||
-        currentRoute == Routes.PAYMENTS
+        currentRoute == Routes.PAYMENTS ||
+        currentRoute == Routes.GOALS
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -258,6 +266,32 @@ fun BudgetMageNavGraph(
                 )
             ) {
                 AddEditPaymentScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Goals (Metas)
+            composable(Routes.GOALS) {
+                GoalListScreen(
+                    onAddGoal = { navController.navigate(Routes.ADD_GOAL) },
+                    onEditGoal = { id -> navController.navigate(Routes.editGoal(id)) },
+                    onMenuClick = { scope.launch { drawerState.open() } }
+                )
+            }
+
+            composable(Routes.ADD_GOAL) {
+                AddEditGoalScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Routes.EDIT_GOAL,
+                arguments = listOf(
+                    navArgument("goalId") { type = NavType.LongType }
+                )
+            ) {
+                AddEditGoalScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

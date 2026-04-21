@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.budgetmage.data.database.entity.CategoryTotal
 import com.budgetmage.data.database.entity.MonthSummary
+import com.budgetmage.data.repository.GoalRepository
 import com.budgetmage.data.repository.PaymentRepository
 import com.budgetmage.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +28,8 @@ data class DashboardUiState(
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
-    private val paymentRepository: PaymentRepository
+    private val paymentRepository: PaymentRepository,
+    private val goalRepository: GoalRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -59,6 +61,17 @@ class DashboardViewModel @Inject constructor(
     val unpaidBillsTotal: StateFlow<Long> = _uiState
         .flatMapLatest { state ->
             paymentRepository.getUnpaidTotalForMonth(state.selectedMonth)
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            0L
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val goalsTotal: StateFlow<Long> = _uiState
+        .flatMapLatest { state ->
+            goalRepository.getTotalTargetForMonth(state.selectedMonth)
         }
         .stateIn(
             viewModelScope,

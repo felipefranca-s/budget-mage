@@ -10,10 +10,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.budgetmage.data.database.converter.Converters
 import com.budgetmage.data.database.dao.AccountDao
 import com.budgetmage.data.database.dao.CategoryDao
+import com.budgetmage.data.database.dao.GoalDao
 import com.budgetmage.data.database.dao.PaymentDao
 import com.budgetmage.data.database.dao.TransactionDao
 import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryEntity
+import com.budgetmage.data.database.entity.GoalEntity
 import com.budgetmage.data.database.entity.PaymentEntity
 import com.budgetmage.data.database.entity.PaymentMonthStatusEntity
 import com.budgetmage.data.database.entity.TransactionEntity
@@ -28,9 +30,10 @@ import kotlinx.coroutines.launch
         CategoryEntity::class,
         TransactionEntity::class,
         PaymentEntity::class,
-        PaymentMonthStatusEntity::class
+        PaymentMonthStatusEntity::class,
+        GoalEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -40,6 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun transactionDao(): TransactionDao
     abstract fun paymentDao(): PaymentDao
+    abstract fun goalDao(): GoalDao
 
     companion object {
         private const val DATABASE_NAME = "budget_mage.db"
@@ -92,6 +96,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS goals (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        amountCents INTEGER NOT NULL,
+                        startDate INTEGER NOT NULL,
+                        endDate INTEGER,
+                        notes TEXT,
+                        priority INTEGER NOT NULL DEFAULT 5,
+                        createdAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_goals_startDate ON goals(startDate)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_goals_endDate ON goals(endDate)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_goals_priority ON goals(priority)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
@@ -104,7 +128,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .addCallback(PrepopulateCallback())
                 .build()
         }
