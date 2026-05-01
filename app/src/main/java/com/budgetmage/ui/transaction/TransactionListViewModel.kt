@@ -29,7 +29,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
+
+private fun currentMonthFilter(): TransactionFilter {
+    val now = YearMonth.now()
+    return TransactionFilter(
+        startDate = now.atDay(1),
+        endDate = now.atEndOfMonth()
+    )
+}
 
 data class TransactionFilter(
     val type: TransactionType? = null,
@@ -67,13 +76,14 @@ class TransactionListViewModel @Inject constructor(
 
     private val initialFilter: TransactionFilter = run {
         val categoryId = savedStateHandle.get<Long>("categoryId")?.takeIf { it != -1L }
-        val startDate = savedStateHandle.get<Long>("startDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
-        val endDate = savedStateHandle.get<Long>("endDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
+        val savedStart = savedStateHandle.get<Long>("startDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
+        val savedEnd = savedStateHandle.get<Long>("endDate")?.takeIf { it != -1L }?.let { LocalDate.ofEpochDay(it) }
+        val defaults = currentMonthFilter()
         TransactionFilter(
             type = if (categoryId != null) TransactionType.EXPENSE else null,
             categoryIds = if (categoryId != null) setOf(categoryId) else emptySet(),
-            startDate = startDate,
-            endDate = endDate
+            startDate = savedStart ?: defaults.startDate,
+            endDate = savedEnd ?: defaults.endDate
         )
     }
 
@@ -125,11 +135,11 @@ class TransactionListViewModel @Inject constructor(
     }
 
     fun clearFilters() {
-        val emptyFilter = TransactionFilter()
-        _filter.value = emptyFilter
+        val resetFilter = currentMonthFilter()
+        _filter.value = resetFilter
         _uiState.update {
             it.copy(
-                filter = emptyFilter,
+                filter = resetFilter,
                 showFilterSheet = false,
                 summary = null
             )

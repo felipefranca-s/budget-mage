@@ -45,6 +45,7 @@ import com.budgetmage.ui.transaction.TransactionFilter
 import com.budgetmage.util.DateFormatter
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZoneOffset
 
@@ -260,11 +261,12 @@ fun FilterBottomSheet(
             ) {
                 OutlinedButton(
                     onClick = {
+                        val now = YearMonth.now()
                         selectedType = null
                         selectedCategoryIds = emptySet()
                         selectedAccountId = null
-                        startDate = null
-                        endDate = null
+                        startDate = now.atDay(1)
+                        endDate = now.atEndOfMonth()
                         descriptionQuery = ""
                         onClearFilters()
                     },
