@@ -95,7 +95,7 @@ fun FilterBottomSheet(
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
-                    .heightIn(max = 400.dp)
+                    .heightIn(max = 600.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 // 1. Type filter

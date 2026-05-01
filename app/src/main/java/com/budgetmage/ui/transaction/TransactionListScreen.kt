@@ -72,7 +72,7 @@ fun TransactionListScreen(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
