@@ -66,6 +66,8 @@
     <string name="filter_end_date">Data final</string>
     <string name="filter_type">Tipo</string>
     <string name="filter_all">Todos</string>
+    <string name="filter_description_label">Descrição</string>
+    <string name="filter_description_hint">Buscar na descrição</string>
 
     <!-- Categories -->
     <string name="categories_title">Categorias</string>

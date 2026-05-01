@@ -31,6 +31,7 @@ interface TransactionDao {
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
+          AND (:hasDescriptionFilter = 0 OR t.description LIKE '%' || :descriptionQuery || '%' COLLATE NOCASE)
         ORDER BY t.date DESC, t.createdAt DESC
     """)
     fun getFilteredTransactions(
@@ -39,7 +40,9 @@ interface TransactionDao {
         categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        hasDescriptionFilter: Int = 0,
+        descriptionQuery: String = ""
     ): Flow<List<TransactionWithDetails>>
 
     @Query("""
@@ -52,6 +55,7 @@ interface TransactionDao {
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
+          AND (:hasDescriptionFilter = 0 OR t.description LIKE '%' || :descriptionQuery || '%' COLLATE NOCASE)
     """)
     fun getFilteredSummary(
         type: TransactionType? = null,
@@ -59,7 +63,9 @@ interface TransactionDao {
         categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        hasDescriptionFilter: Int = 0,
+        descriptionQuery: String = ""
     ): Flow<MonthSummary>
 
     @Query("""
@@ -72,6 +78,7 @@ interface TransactionDao {
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
+          AND (:hasDescriptionFilter = 0 OR t.description LIKE '%' || :descriptionQuery || '%' COLLATE NOCASE)
     """)
     suspend fun getFilteredSummaryOnce(
         type: TransactionType? = null,
@@ -79,7 +86,9 @@ interface TransactionDao {
         categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        hasDescriptionFilter: Int = 0,
+        descriptionQuery: String = ""
     ): MonthSummary
 
     @Query("""
@@ -93,6 +102,7 @@ interface TransactionDao {
           AND (:accountId IS NULL OR t.accountId = :accountId)
           AND (:startDate IS NULL OR t.date >= :startDate)
           AND (:endDate IS NULL OR t.date <= :endDate)
+          AND (:hasDescriptionFilter = 0 OR t.description LIKE '%' || :descriptionQuery || '%' COLLATE NOCASE)
         ORDER BY t.date DESC, t.createdAt DESC
     """)
     fun getFilteredTransactionsPaged(
@@ -101,7 +111,9 @@ interface TransactionDao {
         categoryIds: List<Long> = listOf(-1L),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        hasDescriptionFilter: Int = 0,
+        descriptionQuery: String = ""
     ): PagingSource<Int, TransactionWithDetails>
 
     @Query("""

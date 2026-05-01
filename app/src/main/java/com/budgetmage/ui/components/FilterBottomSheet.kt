@@ -64,6 +64,7 @@ fun FilterBottomSheet(
     var selectedAccountId by remember(currentFilter) { mutableStateOf(currentFilter.accountId) }
     var startDate by remember(currentFilter) { mutableStateOf(currentFilter.startDate) }
     var endDate by remember(currentFilter) { mutableStateOf(currentFilter.endDate) }
+    var descriptionQuery by remember(currentFilter) { mutableStateOf(currentFilter.descriptionQuery) }
 
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
@@ -201,7 +202,23 @@ fun FilterBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 4. Category filter
+                // 4. Description search
+                Text(
+                    text = stringResource(R.string.filter_description_label),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = descriptionQuery,
+                    onValueChange = { descriptionQuery = it },
+                    placeholder = { Text(stringResource(R.string.filter_description_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 5. Category filter
                 Text(
                     text = stringResource(R.string.transaction_category),
                     style = MaterialTheme.typography.labelLarge
@@ -248,6 +265,7 @@ fun FilterBottomSheet(
                         selectedAccountId = null
                         startDate = null
                         endDate = null
+                        descriptionQuery = ""
                         onClearFilters()
                     },
                     modifier = Modifier.weight(1f)
@@ -262,7 +280,8 @@ fun FilterBottomSheet(
                                 categoryIds = selectedCategoryIds,
                                 accountId = selectedAccountId,
                                 startDate = startDate,
-                                endDate = endDate
+                                endDate = endDate,
+                                descriptionQuery = descriptionQuery
                             )
                         )
                     },

@@ -27,14 +27,17 @@ class TransactionRepository @Inject constructor(
         categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        descriptionQuery: String? = null
     ): Flow<List<TransactionWithDetails>> = transactionDao.getFilteredTransactions(
         type = type,
         hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
         categoryIds = categoryIds.ifEmpty { listOf(-1L) },
         accountId = accountId,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        hasDescriptionFilter = if (descriptionQuery.isNullOrBlank()) 0 else 1,
+        descriptionQuery = descriptionQuery.orEmpty()
     )
 
     fun getFilteredSummary(
@@ -42,14 +45,17 @@ class TransactionRepository @Inject constructor(
         categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        descriptionQuery: String? = null
     ): Flow<MonthSummary> = transactionDao.getFilteredSummary(
         type = type,
         hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
         categoryIds = categoryIds.ifEmpty { listOf(-1L) },
         accountId = accountId,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        hasDescriptionFilter = if (descriptionQuery.isNullOrBlank()) 0 else 1,
+        descriptionQuery = descriptionQuery.orEmpty()
     )
 
     suspend fun getFilteredSummaryOnce(
@@ -57,14 +63,17 @@ class TransactionRepository @Inject constructor(
         categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        descriptionQuery: String? = null
     ): MonthSummary = transactionDao.getFilteredSummaryOnce(
         type = type,
         hasCategoryFilter = if (categoryIds.isEmpty()) 0 else 1,
         categoryIds = categoryIds.ifEmpty { listOf(-1L) },
         accountId = accountId,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        hasDescriptionFilter = if (descriptionQuery.isNullOrBlank()) 0 else 1,
+        descriptionQuery = descriptionQuery.orEmpty()
     )
 
     fun getFilteredTransactionsPaged(
@@ -72,7 +81,8 @@ class TransactionRepository @Inject constructor(
         categoryIds: List<Long> = emptyList(),
         accountId: Long? = null,
         startDate: Long? = null,
-        endDate: Long? = null
+        endDate: Long? = null,
+        descriptionQuery: String? = null
     ): Flow<PagingData<TransactionWithDetails>> = Pager(
         config = PagingConfig(
             pageSize = 20,
@@ -86,7 +96,9 @@ class TransactionRepository @Inject constructor(
                 categoryIds = categoryIds.ifEmpty { listOf(-1L) },
                 accountId = accountId,
                 startDate = startDate,
-                endDate = endDate
+                endDate = endDate,
+                hasDescriptionFilter = if (descriptionQuery.isNullOrBlank()) 0 else 1,
+                descriptionQuery = descriptionQuery.orEmpty()
             )
         }
     ).flow

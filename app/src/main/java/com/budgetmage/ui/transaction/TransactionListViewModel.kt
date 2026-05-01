@@ -36,11 +36,12 @@ data class TransactionFilter(
     val categoryIds: Set<Long> = emptySet(),
     val accountId: Long? = null,
     val startDate: LocalDate? = null,
-    val endDate: LocalDate? = null
+    val endDate: LocalDate? = null,
+    val descriptionQuery: String = ""
 ) {
     val hasActiveFilters: Boolean
         get() = type != null || categoryIds.isNotEmpty() || accountId != null ||
-                startDate != null || endDate != null
+                startDate != null || endDate != null || descriptionQuery.isNotBlank()
 }
 
 data class TransactionListUiState(
@@ -92,7 +93,8 @@ class TransactionListViewModel @Inject constructor(
                 categoryIds = filter.categoryIds.toList(),
                 accountId = filter.accountId,
                 startDate = filter.startDate?.toEpochDay(),
-                endDate = filter.endDate?.toEpochDay()
+                endDate = filter.endDate?.toEpochDay(),
+                descriptionQuery = filter.descriptionQuery.trim().takeIf { it.isNotBlank() }
             )
         }
         .cachedIn(viewModelScope)
@@ -146,7 +148,8 @@ class TransactionListViewModel @Inject constructor(
                 categoryIds = filter.categoryIds.toList(),
                 accountId = filter.accountId,
                 startDate = filter.startDate?.toEpochDay(),
-                endDate = filter.endDate?.toEpochDay()
+                endDate = filter.endDate?.toEpochDay(),
+                descriptionQuery = filter.descriptionQuery.trim().takeIf { it.isNotBlank() }
             )
             _uiState.update { it.copy(summary = result) }
         }
