@@ -2,85 +2,83 @@ package com.budgetmage.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryTotal
 import com.budgetmage.data.database.entity.MonthSummary
+import com.budgetmage.data.repository.AccountRepository
+import com.budgetmage.data.repository.DashboardSettingsRepository
 import com.budgetmage.data.repository.GoalRepository
 import com.budgetmage.data.repository.PaymentRepository
 import com.budgetmage.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.YearMonth
 import javax.inject.Inject
 
 data class DashboardUiState(
     val selectedMonth: YearMonth = YearMonth.now(),
     val isLoading: Boolean = true,
-    val valuesHidden: Boolean = true
+    val valuesHidden: Boolean = true,
+    val showAccountFilterSheet: Boolean = false
 )
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val paymentRepository: PaymentRepository,
-    private val goalRepository: GoalRepository
+    private val goalRepository: GoalRepository,
+    private val accountRepository: AccountRepository,
+    private val dashboardSettingsRepository: DashboardSettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val monthSummary: StateFlow<MonthSummary> = _uiState
-        .flatMapLatest { state ->
-            transactionRepository.getMonthSummary(state.selectedMonth)
-        }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            MonthSummary(0, 0)
-        )
+    val allAccounts: StateFlow<List<AccountEntity>> = accountRepository.getAllAccounts()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val excludedAccountIds: StateFlow<Set<Long>> = dashboardSettingsRepository.getExcludedAccountIds()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val categoryExpenses: StateFlow<List<CategoryTotal>> = _uiState
-        .flatMapLatest { state ->
-            transactionRepository.getAllExpenseCategories(state.selectedMonth)
-        }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            emptyList()
-        )
+    val monthSummary: StateFlow<MonthSummary> =
+        combine(_uiState, excludedAccountIds) { state, excluded -> state to excluded }
+            .flatMapLatest { (state, excluded) ->
+                transactionRepository.getMonthSummaryFiltered(state.selectedMonth, excluded)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MonthSummary(0, 0))
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val categoryExpenses: StateFlow<List<CategoryTotal>> =
+        combine(_uiState, excludedAccountIds) { state, excluded -> state to excluded }
+            .flatMapLatest { (state, excluded) ->
+                transactionRepository.getAllExpenseCategoriesFiltered(state.selectedMonth, excluded)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val unpaidBillsTotal: StateFlow<Long> = _uiState
         .flatMapLatest { state ->
             paymentRepository.getUnpaidTotalForMonth(state.selectedMonth)
         }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            0L
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val goalsTotal: StateFlow<Long> = _uiState
         .flatMapLatest { state ->
             goalRepository.getTotalTargetForMonth(state.selectedMonth)
         }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            0L
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
     init {
-        // Mark loading as false after initial data load
         viewModelScope.launch {
             monthSummary.collect {
                 _uiState.value = _uiState.value.copy(isLoading = false)
@@ -103,8 +101,22 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun toggleValuesVisibility() {
-        _uiState.value = _uiState.value.copy(
-            valuesHidden = !_uiState.value.valuesHidden
-        )
+        _uiState.value = _uiState.value.copy(valuesHidden = !_uiState.value.valuesHidden)
+    }
+
+    fun openAccountFilterSheet() {
+        _uiState.value = _uiState.value.copy(showAccountFilterSheet = true)
+    }
+
+    fun closeAccountFilterSheet() {
+        _uiState.value = _uiState.value.copy(showAccountFilterSheet = false)
+    }
+
+    fun toggleAccountExclusion(accountId: Long) {
+        viewModelScope.launch {
+            val current = excludedAccountIds.value.toMutableSet()
+            if (accountId in current) current.remove(accountId) else current.add(accountId)
+            dashboardSettingsRepository.setExcludedAccountIds(current)
+        }
     }
 }

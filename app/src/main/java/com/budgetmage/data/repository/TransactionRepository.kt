@@ -153,6 +153,17 @@ class TransactionRepository @Inject constructor(
         return transactionDao.getMonthSummary(startDay, endDay)
     }
 
+    fun getMonthSummaryFiltered(yearMonth: YearMonth, excludedAccountIds: Set<Long>): Flow<MonthSummary> {
+        val startDay = yearMonth.atDay(1).toEpochDay()
+        val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
+        return transactionDao.getMonthSummaryFiltered(
+            startDay = startDay,
+            endDay = endDay,
+            hasExcludedAccounts = if (excludedAccountIds.isEmpty()) 0 else 1,
+            excludedAccountIds = excludedAccountIds.ifEmpty { listOf(-1L) }.toList()
+        )
+    }
+
     fun getTopExpenseCategories(yearMonth: YearMonth, limit: Int = 5): Flow<List<CategoryTotal>> {
         val startDay = yearMonth.atDay(1).toEpochDay()
         val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
@@ -163,5 +174,16 @@ class TransactionRepository @Inject constructor(
         val startDay = yearMonth.atDay(1).toEpochDay()
         val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
         return transactionDao.getAllExpenseCategories(startDay, endDay)
+    }
+
+    fun getAllExpenseCategoriesFiltered(yearMonth: YearMonth, excludedAccountIds: Set<Long>): Flow<List<CategoryTotal>> {
+        val startDay = yearMonth.atDay(1).toEpochDay()
+        val endDay = yearMonth.plusMonths(1).atDay(1).toEpochDay()
+        return transactionDao.getAllExpenseCategoriesFiltered(
+            startDay = startDay,
+            endDay = endDay,
+            hasExcludedAccounts = if (excludedAccountIds.isEmpty()) 0 else 1,
+            excludedAccountIds = excludedAccountIds.ifEmpty { listOf(-1L) }.toList()
+        )
     }
 }

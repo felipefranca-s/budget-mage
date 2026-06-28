@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
@@ -66,6 +67,8 @@ fun DashboardScreen(
     val categoryExpenses by viewModel.categoryExpenses.collectAsStateWithLifecycle()
     val unpaidBillsTotal by viewModel.unpaidBillsTotal.collectAsStateWithLifecycle()
     val goalsTotal by viewModel.goalsTotal.collectAsStateWithLifecycle()
+    val allAccounts by viewModel.allAccounts.collectAsStateWithLifecycle()
+    val excludedAccountIds by viewModel.excludedAccountIds.collectAsStateWithLifecycle()
 
     val isDark = isSystemInDarkTheme()
     val incomeColor = if (isDark) IncomeColorDark else IncomeColor
@@ -81,6 +84,12 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.openAccountFilterSheet() }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.dashboard_account_filter_title)
+                        )
+                    }
                     IconButton(onClick = { viewModel.toggleValuesVisibility() }) {
                         Icon(
                             imageVector = if (uiState.valuesHidden) {
@@ -104,6 +113,14 @@ fun DashboardScreen(
             }
         }
     ) { paddingValues ->
+        if (uiState.showAccountFilterSheet) {
+            DashboardAccountFilterSheet(
+                accounts = allAccounts,
+                excludedAccountIds = excludedAccountIds,
+                onToggleAccount = viewModel::toggleAccountExclusion,
+                onDismiss = viewModel::closeAccountFilterSheet
+            )
+        }
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier

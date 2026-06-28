@@ -153,6 +153,21 @@ interface TransactionDao {
     fun getMonthSummary(startDay: Long, endDay: Long): Flow<MonthSummary>
 
     @Query("""
+        SELECT
+            COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amountCents ELSE 0 END), 0) as totalIncomeCents,
+            COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amountCents ELSE 0 END), 0) as totalExpenseCents
+        FROM transactions
+        WHERE date >= :startDay AND date < :endDay
+          AND (:hasExcludedAccounts = 0 OR accountId NOT IN (:excludedAccountIds))
+    """)
+    fun getMonthSummaryFiltered(
+        startDay: Long,
+        endDay: Long,
+        hasExcludedAccounts: Int,
+        excludedAccountIds: List<Long>
+    ): Flow<MonthSummary>
+
+    @Query("""
         SELECT c.id as categoryId, c.name as categoryName, SUM(t.amountCents) as totalCents
         FROM transactions t
         INNER JOIN categories c ON t.categoryId = c.id
@@ -176,4 +191,22 @@ interface TransactionDao {
         ORDER BY totalCents DESC
     """)
     fun getAllExpenseCategories(startDay: Long, endDay: Long): Flow<List<CategoryTotal>>
+
+    @Query("""
+        SELECT c.id as categoryId, c.name as categoryName, SUM(t.amountCents) as totalCents
+        FROM transactions t
+        INNER JOIN categories c ON t.categoryId = c.id
+        WHERE t.type = 'EXPENSE'
+          AND t.date >= :startDay
+          AND t.date < :endDay
+          AND (:hasExcludedAccounts = 0 OR t.accountId NOT IN (:excludedAccountIds))
+        GROUP BY t.categoryId
+        ORDER BY totalCents DESC
+    """)
+    fun getAllExpenseCategoriesFiltered(
+        startDay: Long,
+        endDay: Long,
+        hasExcludedAccounts: Int,
+        excludedAccountIds: List<Long>
+    ): Flow<List<CategoryTotal>>
 }

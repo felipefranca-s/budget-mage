@@ -4,6 +4,7 @@ import android.content.Context
 import com.budgetmage.data.database.AppDatabase
 import com.budgetmage.data.database.dao.AccountDao
 import com.budgetmage.data.database.dao.CategoryDao
+import com.budgetmage.data.database.dao.DashboardSettingsDao
 import com.budgetmage.data.database.dao.GoalDao
 import com.budgetmage.data.database.dao.PaymentDao
 import com.budgetmage.data.database.dao.TransactionDao
@@ -52,5 +53,11 @@ object AppModule {
     @Singleton
     fun provideGoalDao(database: AppDatabase): GoalDao {
         return database.goalDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDashboardSettingsDao(database: AppDatabase): DashboardSettingsDao {
+        return database.dashboardSettingsDao()
     }
 }

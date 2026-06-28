@@ -13,4 +13,12 @@ class Converters {
 
     @TypeConverter
     fun toTransactionType(value: String): TransactionType = TransactionType.valueOf(value)
+
+    @TypeConverter
+    fun fromLongSet(set: Set<Long>): String = set.joinToString(",")
+
+    @TypeConverter
+    fun toLongSet(value: String): Set<Long> =
+        if (value.isBlank()) emptySet()
+        else value.split(",").mapNotNull { it.toLongOrNull() }.toSet()
 }

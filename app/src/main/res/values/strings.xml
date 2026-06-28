@@ -32,6 +32,8 @@
     <string name="dashboard_recommended_spending">Gasto sugerido</string>
     <string name="show_values">Exibir valores</string>
     <string name="hide_values">Ocultar valores</string>
+    <string name="dashboard_account_filter_title">Contas no dashboard</string>
+    <string name="dashboard_account_filter_subtitle">Selecione quais contas serão consideradas nos totais</string>
 
     <!-- Transactions -->
     <string name="transactions_title">Transações</string>

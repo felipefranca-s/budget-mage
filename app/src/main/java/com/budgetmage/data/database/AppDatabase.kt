@@ -10,11 +10,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.budgetmage.data.database.converter.Converters
 import com.budgetmage.data.database.dao.AccountDao
 import com.budgetmage.data.database.dao.CategoryDao
+import com.budgetmage.data.database.dao.DashboardSettingsDao
 import com.budgetmage.data.database.dao.GoalDao
 import com.budgetmage.data.database.dao.PaymentDao
 import com.budgetmage.data.database.dao.TransactionDao
 import com.budgetmage.data.database.entity.AccountEntity
 import com.budgetmage.data.database.entity.CategoryEntity
+import com.budgetmage.data.database.entity.DashboardSettingsEntity
 import com.budgetmage.data.database.entity.GoalEntity
 import com.budgetmage.data.database.entity.PaymentEntity
 import com.budgetmage.data.database.entity.PaymentMonthStatusEntity
@@ -31,9 +33,10 @@ import kotlinx.coroutines.launch
         TransactionEntity::class,
         PaymentEntity::class,
         PaymentMonthStatusEntity::class,
-        GoalEntity::class
+        GoalEntity::class,
+        DashboardSettingsEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -44,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun paymentDao(): PaymentDao
     abstract fun goalDao(): GoalDao
+    abstract fun dashboardSettingsDao(): DashboardSettingsDao
 
     companion object {
         private const val DATABASE_NAME = "budget_mage.db"
@@ -96,6 +100,17 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS dashboard_settings (
+                        id INTEGER PRIMARY KEY NOT NULL,
+                        excludedAccountIds TEXT NOT NULL DEFAULT ''
+                    )
+                """.trimIndent())
+            }
+        }
+
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""
@@ -128,7 +143,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .addCallback(PrepopulateCallback())
                 .build()
         }
